@@ -1,67 +1,122 @@
 /* Fondo del formulario */
-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #6a11cb, #2575fc); /* Fondo degradado */
-  }
-  
-  .formulario {
-    background-color: white;
-    padding: 2em;
-    border-radius: 10px;
-    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1); /* Sombra para profundidad */
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-  }
-  
-  h1 {
-    font-size: 2em;
-    margin-bottom: 1.5em;
-    color: #ffffff;
-    font-weight: 600;
-  }
-  
-  /* Estilo para los inputs */
-  input {
-    width: 90%;
-    padding: 1em;
-    margin: 0.8em 0;
-    border: 1px solid #ddd;
-    border-radius: 7px;
-    font-size: 1em;
-    outline: none;
-    transition: border-color 0.3s ease;
-  }
-  
-  input:focus {
-    border-color: #2575fc; /* Color cuando se selecciona el input */
-  }
-  
-  /* Estilo para el botón de login */
-  button {
-    background-color: #2575fc;
-    color: white;
-    padding: 1em 2em;
-    font-size: 1em;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-  }
-  
-  button:hover {
-    background-color: #6a11cb;
-    transform: translateY(-2px); /* Efecto de elevación */
-  }
-  
-  /* Estilo para el mensaje de error */
-  .error {
-    color: red;
-    font-size: 0.9em;
-    margin-bottom: 1em;
-  }
-  
-  
+/*section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+}/*
+  /* Fondo degradado */
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #2c3e50;
+  overflow: hidden;
+}
+
+/* Estilos para el formulario de login centrado */
+.login-container {
+  position: relative;
+  width: 400px;
+  height: 450px;
+  background-color: #1a1a1a96;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-container h2 {
+  font-size: 2em;
+  margin-bottom: 1.5em;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Estilo para los inputs */
+.input-box {
+  position: relative;
+  width: 100%;
+  margin: 30px 0;
+}
+
+.input-box:focus {
+  border-color: #2575fc;
+  /* Color cuando se selecciona el input */
+}
+
+.input-box .input-line {
+  position: absolute;
+  width: 100%;
+  bottom: -2px;
+  left: 0;
+  height: 2.5px;
+  background: #fff;
+  transition: 0.5s ease;
+}
+
+.input-box label {
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  transform: translateY(-50%);
+  font-size: 1em;
+  pointer-events: none;
+  color: #fff;
+  transition: .5s ease;
+}
+
+.input-box input:focus~label,
+.input-box input:valid~label {
+  top: -5px;
+}
+
+.input-box input {
+  width: 100%;
+  height: 50px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 1em;
+  color: #fff;
+  padding: 0 35px 0 5px;
+  transition: 0.2s ease;
+}
+
+.input-box .icon {
+  position: absolute;
+  right: 8px;
+  color: var(--white-color);
+  font-size: var(--medium-font-size);
+  line-height: 57px;
+  transition: 0.5s;
+}
+
+/* Estilo para el botón de login */
+.login-button {
+  width: 100%;
+  height: 40px;
+  background: #4CAF50;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  color: #0f0a06;
+  font-weight: 500;
+  transition: 0.5s ease;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  background: #4CA000;
+}
+
+/* Estilo para el mensaje de error */
+.error {
+  color: red;
+  font-size: 0.9em;
+  margin-bottom: 1em;
+}

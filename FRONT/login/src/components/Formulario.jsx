@@ -27,33 +27,40 @@ export function Formulario({ setUser }) {
   };
 
   return (
-    <section className="login-container">
-      <h1>User login</h1>
+    <div className="container">
+      <div className="login-container">
 
-      <form className="formulario" onSubmit={manejarEnvio}>
-        {error && <p className="error">Todos los campos son obligatorios</p>}
+        <form onSubmit={manejarEnvio}>
+          <h2>User login</h2>
 
-        <input
-          type="text"
-          placeholder="Nombre de usuario"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={contraseña}
-          onChange={(e) => setContraseña(e.target.value)}
-        />
-        <button type="submit">Iniciar sesión</button>
-      </form>
-    </section>
+          {error && <p className="error">Todos los campos son obligatorios</p>}
+
+          <div class="input-box">
+            
+            <input
+              type="text"
+              required="required"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+            />
+            <label>Nombre de usuario</label>
+            <div class="input-line"></div>
+          </div>
+
+          <div class="input-box">
+            <input
+              type="password"
+              required="required"
+              value={contraseña}
+              onChange={(e) => setContraseña(e.target.value)}
+            />
+            <label>Contraseña</label>
+            <div class="input-line"></div>
+          </div>
+
+          <button className="login-button" type="submit">Iniciar sesión</button>
+        </form>
+      </div>
+    </div>
   );
 }
-
-
-
-
-
-
-

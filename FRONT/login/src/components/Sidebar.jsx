@@ -1,3 +1,5 @@
+import './Sidebar.css'
+
 /**
  * Componente de barra lateral con enlaces de navegación.
  */
@@ -5,7 +7,7 @@ const Sidebar = () => {
   return (
     <div className="sidebar">
       <h2>Menu Principal</h2>
-      <ul>
+      <ul className="sidebarMenuContent">
         <li><a href="#">Dashboard</a></li>
         <li><a href="#">Empleados</a></li>
         <li><a href="#">Configuración</a></li>
@@ -15,4 +17,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-
