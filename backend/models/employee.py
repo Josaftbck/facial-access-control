@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Enum, SmallInteger, Integer, DateTime, LargeBinary, ForeignKey
+from sqlalchemy import Column, String, Enum, SmallInteger, Integer, DateTime, LargeBinary, ForeignKey, Text
 from database.db import Base
 from datetime import datetime
 
@@ -20,10 +20,6 @@ class Employee(Base):
     CreateDate = Column(DateTime, default=datetime.now)
     Code = Column(String(50), nullable=True)
     BiometricImage = Column(LargeBinary, nullable=True)
+    BiometricEmbedding = Column(Text, nullable=True)
     type_emp = Column(Enum("E", "V"), nullable=False, default="E")
-
-    biometric_status = Column(
-        SmallInteger,
-        ForeignKey("umg_biometria.biometric_status.status_id"),
-        default=1
-    )
+    biometric_status = Column(SmallInteger, ForeignKey("umg_biometria.biometric_status.status_id"), default=1)
