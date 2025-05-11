@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, Query
+from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from database.db import get_db
 from models.employee import Employee
@@ -9,6 +9,7 @@ import datetime
 import json
 import os
 import numpy as np
+import io
 from sklearn.metrics.pairwise import cosine_similarity
 
 router = APIRouter(prefix="/empleados", tags=["Empleados"])
@@ -35,11 +36,9 @@ async def registrar_empleado(
     db: Session = Depends(get_db)
 ):
     try:
-        # Guardar imagen temporalmente
         with open(temp_image_path, "wb") as f:
             f.write(await image.read())
 
-        # Obtener embedding del rostro nuevo
         new_embedding = face_service.calculate_embedding(temp_image_path)
 
         empleados = db.query(Employee).all()
@@ -49,7 +48,6 @@ async def registrar_empleado(
                 try:
                     match, similarity = compare_embeddings_cosine(new_embedding, existing_embedding)
                     if match:
-                        # Guardar intento duplicado en DuplicateAttempt
                         duplicate_attempt = DuplicateAttempt(
                             emp_id_detected=emp.empID,
                             attempted_firstName=firstName,
@@ -66,7 +64,7 @@ async def registrar_empleado(
                         return JSONResponse(
                             status_code=200,
                             content={
-                                "mensaje": f"⚠️ El rostro coincide con el empleado ID {emp.empID} ({emp.firstName} {emp.lastName}), similitud {similarity:.2f}. El intento fue guardado en DuplicateAttempts.",
+                                "mensaje": f"⚠️ El rostro coincide con el empleado ID {emp.empID} ({emp.firstName} {emp.lastName}), similitud {similarity:.2f}. Intento guardado en DuplicateAttempts.",
                                 "estado": "REJECTED_DUPLICATE",
                                 "empID_detectado": emp.empID,
                                 "nombre_detectado": f"{emp.firstName} {emp.lastName}"
@@ -76,7 +74,6 @@ async def registrar_empleado(
                     print(f"Error al comparar con empleado ID {emp.empID}: {e}")
                     continue
 
-        # Si no hay duplicado, registrar nuevo empleado
         embedding_str = json.dumps(new_embedding)
 
         nuevo = Employee(
@@ -111,25 +108,50 @@ async def registrar_empleado(
         )
 
     finally:
-        # Eliminar archivo temporal
         if os.path.exists(temp_image_path):
             os.remove(temp_image_path)
 
-# Obtener todos los empleados
 @router.get("/")
-def obtener_empleados(db: Session = Depends(get_db)):
-    empleados = db.query(Employee).all()
-    return empleados
+def obtener_empleados(
+    estado: str = Query("activos", description="Filtrar por activos/eliminados/todos"),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Employee)
+    if estado == "activos":
+        query = query.filter(Employee.Active == 'Y')
+    elif estado == "eliminados":
+        query = query.filter(Employee.Active == 'N')
 
-# Obtener un empleado por ID
-@router.get("/{emp_id}")
-def obtener_empleado(emp_id: int, db: Session = Depends(get_db)):
+    empleados = query.all()
+
+    resultado = []
+    for emp in empleados:
+        resultado.append({
+            "empID": emp.empID,
+            "firstName": emp.firstName,
+            "lastName": emp.lastName,
+            "sex": emp.sex,
+            "jobTitle": emp.jobTitle,
+            "dept": emp.dept,
+            "mobile": emp.mobile,
+            "email": emp.email,
+            "Active": emp.Active,
+            "type_emp": emp.type_emp,
+            "UpdateDate": emp.UpdateDate,
+            "CreateDate": emp.CreateDate,
+            "biometric_status": emp.biometric_status,
+        })
+
+    return resultado
+
+@router.get("/{emp_id}/imagen")
+def obtener_imagen_empleado(emp_id: int, db: Session = Depends(get_db)):
     empleado = db.query(Employee).filter(Employee.empID == emp_id).first()
-    if not empleado:
-        raise HTTPException(status_code=404, detail="Empleado no encontrado.")
-    return empleado
+    if not empleado or not empleado.BiometricImage:
+        raise HTTPException(status_code=404, detail="Empleado o imagen no encontrada.")
 
-# Actualizar empleado
+    return StreamingResponse(io.BytesIO(empleado.BiometricImage), media_type="image/jpeg")
+
 @router.put("/{emp_id}")
 def actualizar_empleado(
     emp_id: int,
@@ -162,14 +184,24 @@ def actualizar_empleado(
 
     return {"mensaje": "✅ Empleado actualizado correctamente", "empID": empleado.empID}
 
-# Eliminar empleado
-@router.delete("/{emp_id}")
-def eliminar_empleado(emp_id: int, db: Session = Depends(get_db)):
+@router.put("/{emp_id}/desactivar")
+def desactivar_empleado(emp_id: int, db: Session = Depends(get_db)):
     empleado = db.query(Employee).filter(Employee.empID == emp_id).first()
     if not empleado:
         raise HTTPException(status_code=404, detail="Empleado no encontrado.")
 
-    db.delete(empleado)
+    empleado.Active = 'N'
+    empleado.UpdateDate = datetime.datetime.now()
     db.commit()
+    return {"mensaje": "✅ Empleado desactivado correctamente"}
 
-    return {"mensaje": "✅ Empleado eliminado correctamente", "empID": emp_id}
+@router.put("/{emp_id}/restaurar")
+def restaurar_empleado(emp_id: int, db: Session = Depends(get_db)):
+    empleado = db.query(Employee).filter(Employee.empID == emp_id).first()
+    if not empleado:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado.")
+
+    empleado.Active = 'Y'
+    empleado.UpdateDate = datetime.datetime.now()
+    db.commit()
+    return {"mensaje": "✅ Empleado restaurado correctamente"}

@@ -113,70 +113,76 @@ function Empleado() {
     <div className="container my-5">
       <h2 className="text-center mb-4">Registro de Empleado (con cámara)</h2>
 
-      <div className="text-center mb-4">
-        <video ref={videoRef} autoPlay className="border rounded" style={{ width: '320px' }} />
-        <div className="mt-2">
-          <button type="button" className="btn btn-primary" onClick={tomarFoto}>
-            📸 Tomar Foto
-          </button>
+      <div className="row">
+        {/* Columna izquierda: cámara */}
+        <div className="col-md-6 text-center mb-4">
+          <video ref={videoRef} autoPlay className="border rounded w-100" />
+          <div className="mt-2">
+            <button type="button" className="btn btn-primary" onClick={tomarFoto}>
+              📸 Tomar Foto
+            </button>
+          </div>
+        </div>
+
+        {/* Columna derecha: formulario */}
+        <div className="col-md-6">
+          <form onSubmit={handleSubmit} className="row g-3">
+            <div className="col-12">
+              <label className="form-label">Nombre</label>
+              <input type="text" name="firstName" value={form.firstName} onChange={handleChange} className="form-control" required />
+            </div>
+            <div className="col-12">
+              <label className="form-label">Apellido</label>
+              <input type="text" name="lastName" value={form.lastName} onChange={handleChange} className="form-control" required />
+            </div>
+            <div className="col-6">
+              <label className="form-label">Sexo</label>
+              <select name="sex" value={form.sex} onChange={handleChange} className="form-select">
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+              </select>
+            </div>
+            <div className="col-6">
+              <label className="form-label">Tipo</label>
+              <select name="type_emp" value={form.type_emp} onChange={handleChange} className="form-select">
+                <option value="E">Empleado</option>
+                <option value="V">Visitante</option>
+              </select>
+            </div>
+            <div className="col-12">
+              <label className="form-label">Puesto</label>
+              <select name="jobTitle" value={form.jobTitle} onChange={handleChange} className="form-select" required>
+                <option value="">Seleccione Puesto</option>
+                {puestos.map((p) => (
+                  <option key={p.jobTitle} value={p.jobTitle}>{p.Name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-12">
+              <label className="form-label">Departamento</label>
+              <select name="dept" value={form.dept} onChange={handleChange} className="form-select" required>
+                <option value="">Seleccione Departamento</option>
+                {departamentos.map((d) => (
+                  <option key={d.Code} value={d.Code}>{d.Name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-6">
+              <label className="form-label">Teléfono</label>
+              <input type="text" name="mobile" value={form.mobile} onChange={handleChange} className="form-control" />
+            </div>
+            <div className="col-6">
+              <label className="form-label">Correo</label>
+              <input type="email" name="email" value={form.email} onChange={handleChange} className="form-control" />
+            </div>
+            <div className="col-12">
+              <button type="submit" className="btn btn-success w-100">
+                ✅ Registrar Empleado
+              </button>
+            </div>
+          </form>
         </div>
       </div>
-
-      <form onSubmit={handleSubmit} className="row g-3">
-        <div className="col-md-6">
-          <label className="form-label">Nombre</label>
-          <input type="text" name="firstName" value={form.firstName} onChange={handleChange} className="form-control" required />
-        </div>
-        <div className="col-md-6">
-          <label className="form-label">Apellido</label>
-          <input type="text" name="lastName" value={form.lastName} onChange={handleChange} className="form-control" required />
-        </div>
-        <div className="col-md-4">
-          <label className="form-label">Sexo</label>
-          <select name="sex" value={form.sex} onChange={handleChange} className="form-select">
-            <option value="M">Masculino</option>
-            <option value="F">Femenino</option>
-          </select>
-        </div>
-        <div className="col-md-4">
-          <label className="form-label">Tipo</label>
-          <select name="type_emp" value={form.type_emp} onChange={handleChange} className="form-select">
-            <option value="E">Empleado</option>
-            <option value="V">Visitante</option>
-          </select>
-        </div>
-        <div className="col-md-4">
-          <label className="form-label">Puesto</label>
-          <select name="jobTitle" value={form.jobTitle} onChange={handleChange} className="form-select" required>
-            <option value="">Seleccione Puesto</option>
-            {puestos.map((p) => (
-              <option key={p.jobTitle} value={p.jobTitle}>{p.Name}</option>
-            ))}
-          </select>
-        </div>
-        <div className="col-md-6">
-          <label className="form-label">Departamento</label>
-          <select name="dept" value={form.dept} onChange={handleChange} className="form-select" required>
-            <option value="">Seleccione Departamento</option>
-            {departamentos.map((d) => (
-              <option key={d.Code} value={d.Code}>{d.Name}</option>
-            ))}
-          </select>
-        </div>
-        <div className="col-md-3">
-          <label className="form-label">Teléfono</label>
-          <input type="text" name="mobile" value={form.mobile} onChange={handleChange} className="form-control" />
-        </div>
-        <div className="col-md-3">
-          <label className="form-label">Correo</label>
-          <input type="email" name="email" value={form.email} onChange={handleChange} className="form-control" />
-        </div>
-        <div className="col-12">
-          <button type="submit" className="btn btn-success w-100">
-            ✅ Registrar Empleado
-          </button>
-        </div>
-      </form>
     </div>
   );
 }
