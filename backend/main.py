@@ -4,6 +4,10 @@ from routes import department
 from routes import position
 from routes import recognition
 from routes import employee  # ✅ ¡Agregar!
+from routes import access
+from routes import devices
+from routes import AccessByDepartment
+from routes import event_log  
 from models.biometric_status import BiometricStatus
 
 
@@ -27,3 +31,8 @@ app.include_router(department.router)
 app.include_router(position.router)
 app.include_router(recognition.router)
 app.include_router(employee.router)  # ✅ ¡Agregar!
+app.include_router(access.router)
+app.include_router(devices.router) 
+app.include_router(AccessByDepartment.router)
+app.include_router(event_log.router)
+
