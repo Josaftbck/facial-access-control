@@ -26,6 +26,12 @@ function AppNavbar() {
             <Nav.Link as={NavLink} to="/empleados">
               Reconocimiento facial
             </Nav.Link>
+            <Nav.Link as={NavLink} to="/validar">
+              Validar acceso
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/dispositivos"> {/* ✅ Nuevo link */}
+              Dispositivos
+            </Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Container>
