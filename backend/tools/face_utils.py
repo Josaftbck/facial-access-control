@@ -1,7 +1,7 @@
 import insightface
 import numpy as np
 import cv2
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 # Inicializa el modelo una sola vez al cargar el módulo
 model = insightface.app.FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
@@ -18,10 +18,26 @@ def compare_embedding_to_known(embedding: np.ndarray, known_embeddings: List[Lis
     """Compara un embedding contra una lista de embeddings conocidos normalizados."""
     for idx, known in enumerate(known_embeddings):
         known_np = np.array(known, dtype=np.float32)
-        known_np /= np.linalg.norm(known_np)  # ✅ Normaliza antes de comparar
+        known_np /= np.linalg.norm(known_np)
         dist = np.linalg.norm(embedding - known_np)
         print(f"[Comparación #{idx+1}] Distancia: {dist:.4f}")
         if dist < threshold:
             print(f"🎯 MATCH detectado con distancia {dist:.4f}")
             return dist
     return None
+
+# ✅ NUEVA FUNCIÓN PARA DATOS VISUALES
+def get_faces_with_metadata(image_bytes: bytes) -> List[Dict[str, Any]]:
+    """Devuelve información de cada rostro detectado con bbox, embedding y score."""
+    npimg = np.frombuffer(image_bytes, np.uint8)
+    frame = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+    faces = model.get(frame)
+
+    resultado = []
+    for face in faces:
+        resultado.append({
+            "embedding": (face.embedding / np.linalg.norm(face.embedding)).tolist(),
+            "bbox": [int(x) for x in face.bbox],  # [x1, y1, x2, y2]
+            "det_score": float(face.det_score)
+        })
+    return resultado

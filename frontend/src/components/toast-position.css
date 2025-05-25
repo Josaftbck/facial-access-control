@@ -1,0 +1,4 @@
+.toast-container-custom {
+  margin-top: 80px !important; /* espacio para separar del navbar */
+  z-index: 1050; 
+}

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { ToastContainer, toast } from 'react-toastify';
+import { Modal, Button } from 'react-bootstrap';
+import 'react-toastify/dist/ReactToastify.css';
+import './toast-position.css';
 
 function Puestos() {
   const [puestos, setPuestos] = useState([]);
@@ -8,8 +11,10 @@ function Puestos() {
   const [form, setForm] = useState({ Name: '', Remarks: '' });
   const [editando, setEditando] = useState(false);
   const [codigoEditando, setCodigoEditando] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [codigoEliminar, setCodigoEliminar] = useState(null);
 
-  const BASE_URL = 'http://localhost:8000/puestos';
+  const BASE_URL = `${import.meta.env.VITE_API_URL}/puestos`;
 
   useEffect(() => {
     obtenerPuestos();
@@ -33,8 +38,10 @@ function Puestos() {
     try {
       if (editando) {
         await axios.put(`${BASE_URL}/${codigoEditando}`, form);
+        toast.success('Puesto actualizado correctamente');
       } else {
         await axios.post(BASE_URL, form);
+        toast.success('Puesto registrado correctamente');
       }
       setForm({ Name: '', Remarks: '' });
       setEditando(false);
@@ -42,6 +49,7 @@ function Puestos() {
       obtenerPuestos();
     } catch (error) {
       console.error('Error al guardar puesto:', error);
+      toast.error('❌ Error al guardar el puesto');
     }
   };
 
@@ -51,25 +59,32 @@ function Puestos() {
     setCodigoEditando(p.jobTitle);
   };
 
-  const eliminarPuesto = async (codigo) => {
-    if (confirm('¿Estás seguro de desactivar este puesto?')) {
-      try {
-        await axios.put(`${BASE_URL}/${codigo}/desactivar`);
-        obtenerPuestos();
-      } catch (error) {
-        console.error('Error al desactivar puesto:', error);
-      }
+  const confirmarEliminar = (codigo) => {
+    setCodigoEliminar(codigo);
+    setShowModal(true);
+  };
+
+  const eliminarPuesto = async () => {
+    try {
+      await axios.put(`${BASE_URL}/${codigoEliminar}/desactivar`);
+      toast.info('Puesto eliminado');
+      obtenerPuestos();
+    } catch (error) {
+      console.error('Error al eliminar puesto:', error);
+      toast.error('❌ No se pudo eliminar');
+    } finally {
+      setShowModal(false);
     }
   };
 
   const restaurarPuesto = async (codigo) => {
-    if (confirm('¿Deseas restaurar este puesto?')) {
-      try {
-        await axios.put(`${BASE_URL}/${codigo}/restaurar`);
-        obtenerPuestos();
-      } catch (error) {
-        console.error('Error al restaurar puesto:', error);
-      }
+    try {
+      await axios.put(`${BASE_URL}/${codigo}/restaurar`);
+      toast.success('Puesto restaurado correctamente');
+      obtenerPuestos();
+    } catch (error) {
+      console.error('Error al restaurar puesto:', error);
+      toast.error('❌ No se pudo restaurar');
     }
   };
 
@@ -79,6 +94,7 @@ function Puestos() {
 
   return (
     <div className="container mt-4">
+      <ToastContainer position="top-right" autoClose={3000} className="toast-container-custom" />
       <h2 className="mb-4">{editando ? 'Editar Puesto' : 'Crear Puesto'}</h2>
 
       <form onSubmit={handleSubmit} className="row g-3">
@@ -112,7 +128,6 @@ function Puestos() {
         </div>
       </form>
 
-      {/* Filtro alineado bonito */}
       <div className="d-flex justify-content-between align-items-center mb-3 mt-5">
         <h3>Lista de Puestos</h3>
         <select className="form-select w-auto" value={filtro} onChange={handleFiltroChange}>
@@ -128,6 +143,7 @@ function Puestos() {
             <th>ID</th>
             <th>Nombre</th>
             <th>Observaciones</th>
+            <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -137,27 +153,19 @@ function Puestos() {
               <td>{p.jobTitle}</td>
               <td>{p.Name}</td>
               <td>{p.Remarks}</td>
+              <td>{p.Active ? 'Activo' : 'Inactivo'}</td>
               <td>
                 {p.Active ? (
                   <>
-                    <button
-                      className="btn btn-sm btn-warning me-2"
-                      onClick={() => editarPuesto(p)}
-                    >
+                    <button className="btn btn-sm btn-warning me-2" onClick={() => editarPuesto(p)}>
                       Editar
                     </button>
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => eliminarPuesto(p.jobTitle)}
-                    >
-                      Desactivar
+                    <button className="btn btn-sm btn-danger" onClick={() => confirmarEliminar(p.jobTitle)}>
+                      Eliminar
                     </button>
                   </>
                 ) : (
-                  <button
-                    className="btn btn-sm btn-success"
-                    onClick={() => restaurarPuesto(p.jobTitle)}
-                  >
+                  <button className="btn btn-sm btn-success" onClick={() => restaurarPuesto(p.jobTitle)}>
                     Restaurar
                   </button>
                 )}
@@ -166,6 +174,22 @@ function Puestos() {
           ))}
         </tbody>
       </table>
+
+      {/* Modal Confirmación */}
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmar eliminación</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>¿Estás seguro de eliminar este puesto?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={eliminarPuesto}>
+            Eliminar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

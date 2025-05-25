@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Button, Form, Spinner } from 'react-bootstrap';
 import axios from 'axios';
 
-function EmpleadoPermisosModal({ show, handleClose, empleado }) {
+function EmpleadoPermisosModal({ show, handleClose, empleado, onPermisosActualizados }) {
   const [departamentos, setDepartamentos] = useState([]);
   const [accesos, setAccesos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +18,7 @@ function EmpleadoPermisosModal({ show, handleClose, empleado }) {
 
   const cargarDepartamentos = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/departamentos');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/departamentos`);
       setDepartamentos(res.data);
     } catch (error) {
       console.error('Error cargando departamentos:', error);
@@ -27,7 +27,7 @@ function EmpleadoPermisosModal({ show, handleClose, empleado }) {
 
   const cargarAccesos = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/accesos/empleado/${empleado.empID}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/accesos/empleado/${empleado.empID}`);
       const activos = res.data.filter((a) => a.is_active).map((a) => a.dept_code);
       setAccesos(activos);
     } catch (error) {
@@ -39,7 +39,7 @@ function EmpleadoPermisosModal({ show, handleClose, empleado }) {
 
   const cargarFoto = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/empleados/${empleado.empID}/imagen`, { responseType: 'blob' });
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/empleados/${empleado.empID}/imagen`, { responseType: 'blob' });
       setFoto(URL.createObjectURL(res.data));
     } catch (error) {
       console.error('Error al cargar la foto del empleado:', error);
@@ -56,15 +56,18 @@ function EmpleadoPermisosModal({ show, handleClose, empleado }) {
 
   const guardarCambios = async () => {
     try {
-      await axios.put(`http://localhost:8000/accesos/empleado/${empleado.empID}`, {
+      await axios.put(`${import.meta.env.VITE_API_URL}/accesos/empleado/${empleado.empID}`, {
         emp_id: empleado.empID,
         access_list: accesos,
       });
-      alert('✅ Accesos actualizados correctamente');
+
+      if (typeof onPermisosActualizados === 'function') {
+        onPermisosActualizados(); // 🔔 Emitir evento al componente padre
+      }
+
       handleClose();
     } catch (error) {
-      alert('❌ Error al guardar los accesos');
-      console.error(error);
+      console.error('❌ Error al guardar los accesos', error);
     }
   };
 
@@ -78,7 +81,7 @@ function EmpleadoPermisosModal({ show, handleClose, empleado }) {
           <Spinner animation="border" />
         ) : (
           <div className="row">
-            {/* Lado izquierdo: info del empleado */}
+            {/* Lado izquierdo */}
             <div className="col-md-4 text-center">
               {foto && (
                 <img
@@ -92,7 +95,7 @@ function EmpleadoPermisosModal({ show, handleClose, empleado }) {
               <p className="text-muted">{empleado.jobTitleName}</p>
             </div>
 
-            {/* Lado derecho: permisos */}
+            {/* Lado derecho */}
             <div className="col-md-8">
               <h6>Permisos por Departamento</h6>
               <div className="row">

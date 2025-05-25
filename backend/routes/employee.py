@@ -61,7 +61,7 @@ async def registrar_empleado(
                             attempted_lastName=lastName,
                             attempted_mobile=mobile,
                             attempted_email=email,
-                            similarity_score=float(match_score),  # ✅ conversión a tipo nativo
+                            similarity_score=float(match_score),
                             attempted_datetime=datetime.datetime.now(),
                             status="REJECTED_DUPLICATE"
                         )
@@ -118,6 +118,47 @@ async def registrar_empleado(
         if os.path.exists(temp_image_path):
             os.remove(temp_image_path)
 
+
+@router.post("/validar-rostro")
+async def validar_rostro_temporal(
+    image: UploadFile = Form(...),
+    db: Session = Depends(get_db)
+):
+    image_bytes = await image.read()
+
+    embeddings = get_embeddings_from_image(image_bytes)
+    if not embeddings:
+        raise HTTPException(status_code=400, detail="❌ No se detectó ningún rostro en la imagen.")
+
+    if len(embeddings) > 1:
+        raise HTTPException(status_code=400, detail="⚠️ Se detectaron múltiples rostros.")
+
+    new_embedding = embeddings[0]
+    new_embedding = new_embedding / np.linalg.norm(new_embedding)
+
+    empleados = db.query(Employee).all()
+    for emp in empleados:
+        if emp.BiometricEmbedding:
+            existing_embeddings = json.loads(emp.BiometricEmbedding)
+            score = compare_embedding_to_known(new_embedding, existing_embeddings)
+            if score is not None:
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "estado": "DUPLICADO",
+                        "empID_detectado": emp.empID,
+                        "nombre_detectado": f"{emp.firstName} {emp.lastName}"
+                    }
+                )
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "estado": "NO_DUPLICADO"
+        }
+    )
+
+
 @router.get("/")
 def obtener_empleados(
     estado: str = Query("activos", description="Filtrar por activos/eliminados/todos"),
@@ -146,12 +187,14 @@ def obtener_empleados(
         "biometric_status": emp.biometric_status,
     } for emp in empleados]
 
+
 @router.get("/{emp_id}/imagen")
 def obtener_imagen_empleado(emp_id: int, db: Session = Depends(get_db)):
     empleado = db.query(Employee).filter(Employee.empID == emp_id).first()
     if not empleado or not empleado.BiometricImage:
         raise HTTPException(status_code=404, detail="Empleado o imagen no encontrada.")
     return StreamingResponse(io.BytesIO(empleado.BiometricImage), media_type="image/jpeg")
+
 
 @router.put("/{emp_id}")
 def actualizar_empleado(
@@ -182,6 +225,7 @@ def actualizar_empleado(
     db.refresh(empleado)
     return {"mensaje": "✅ Empleado actualizado correctamente", "empID": empleado.empID}
 
+
 @router.put("/{emp_id}/desactivar")
 def desactivar_empleado(emp_id: int, db: Session = Depends(get_db)):
     empleado = db.query(Employee).filter(Employee.empID == emp_id).first()
@@ -192,6 +236,7 @@ def desactivar_empleado(emp_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"mensaje": "✅ Empleado desactivado correctamente"}
 
+
 @router.put("/{emp_id}/restaurar")
 def restaurar_empleado(emp_id: int, db: Session = Depends(get_db)):
     empleado = db.query(Employee).filter(Employee.empID == emp_id).first()
@@ -201,3 +246,17 @@ def restaurar_empleado(emp_id: int, db: Session = Depends(get_db)):
     empleado.UpdateDate = datetime.datetime.now()
     db.commit()
     return {"mensaje": "✅ Empleado restaurado correctamente"}
+
+@router.post("/verificar-duplicados")
+def verificar_duplicados(
+    email: str = Form(...),
+    mobile: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    email_duplicado = db.query(Employee).filter(Employee.email == email).first() is not None
+    mobile_duplicado = db.query(Employee).filter(Employee.mobile == mobile).first() is not None
+
+    return {
+        "email_duplicado": email_duplicado,
+        "mobile_duplicado": mobile_duplicado
+    }

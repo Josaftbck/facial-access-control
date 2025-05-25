@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Table, Button, Modal, Form } from 'react-bootstrap';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function Dispositivos() {
   const [dispositivos, setDispositivos] = useState([]);
@@ -20,7 +22,7 @@ function Dispositivos() {
 
   const obtenerDispositivos = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/devices');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/devices`);
       let data = res.data;
       if (filtroEstado === "activos") {
         data = data.filter(d => d.Status === "Activo");
@@ -29,12 +31,13 @@ function Dispositivos() {
       }
       setDispositivos(data);
     } catch (error) {
+      toast.error("❌ Error al obtener dispositivos");
       console.error("Error obteniendo dispositivos", error);
     }
   };
 
   const obtenerDepartamentos = async () => {
-    const res = await axios.get('http://localhost:8000/departamentos');
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/departamentos`);
     setDepartamentos(res.data);
   };
 
@@ -59,13 +62,11 @@ function Dispositivos() {
       formData.append("Status", "Activo");
 
       if (editando) {
-        await axios.put(`http://localhost:8000/devices/${editando}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await axios.put(`${import.meta.env.VITE_API_URL}/devices/${editando}`, formData);
+        toast.success(" Dispositivo actualizado correctamente");
       } else {
-        await axios.post("http://localhost:8000/devices", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await axios.post(`${import.meta.env.VITE_API_URL}/devices`, formData);
+        toast.success(" Dispositivo registrado correctamente");
       }
 
       setShowModal(false);
@@ -80,7 +81,7 @@ function Dispositivos() {
       });
       setEditando(null);
     } catch (error) {
-      alert("Error al registrar dispositivo");
+      toast.error("❌ Error al guardar dispositivo");
       console.error(error);
     }
   };
@@ -100,26 +101,30 @@ function Dispositivos() {
 
   const desactivarDispositivo = async (id) => {
     try {
-      await axios.delete(`http://localhost:8000/devices/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/devices/${id}`);
+      toast.info(" Dispositivo desactivado");
       obtenerDispositivos();
     } catch (error) {
-      alert("Error al desactivar dispositivo");
+      toast.error("❌ Error al desactivar dispositivo");
       console.error(error);
     }
   };
 
   const restaurarDispositivo = async (id) => {
     try {
-      await axios.put(`http://localhost:8000/devices/${id}/restaurar`);
+      await axios.put(`${import.meta.env.VITE_API_URL}/devices/${id}/restaurar`);
+      toast.success("Dispositivo restaurado correctamente");
       obtenerDispositivos();
     } catch (error) {
-      alert("Error al restaurar dispositivo");
+      toast.error("❌ Error al restaurar dispositivo");
       console.error(error);
     }
   };
 
   return (
-    <div>
+    <div className="container mt-4">
+      <ToastContainer position="top-right" autoClose={3000} className="toast-container-custom" />
+
       <div className="d-flex justify-content-between align-items-center mb-2">
         <h3>Dispositivos Registrados</h3>
         <Form.Select
@@ -132,7 +137,9 @@ function Dispositivos() {
           <option value="todos">Todos</option>
         </Form.Select>
       </div>
+
       <Button onClick={() => { setShowModal(true); setEditando(null); }}>+ Agregar dispositivo</Button>
+
       <Table striped bordered hover className="mt-3">
         <thead>
           <tr>
@@ -153,7 +160,7 @@ function Dispositivos() {
               <td>{d.DeviceID}</td>
               <td>{d.DeviceName}</td>
               <td>{d.DeviceType}</td>
-              <td>{d.Department_d}</td>
+              <td>{departamentos.find(dep => String(dep.Code) === String(d.Department_d))?.Name || "Desconocido"}</td>
               <td>{d.IPAddress}</td>
               <td>{d.MACAddress}</td>
               <td>{d.Status}</td>

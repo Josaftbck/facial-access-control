@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './toast-position.css';
+import { Modal, Button } from 'react-bootstrap';
 
 function Empleado() {
   const videoRef = useRef(null);
   const [snapshot, setSnapshot] = useState(null);
   const [puestos, setPuestos] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
+  const [validacionRostro, setValidacionRostro] = useState(null);
+  const [colorAlerta, setColorAlerta] = useState('');
+  const [showDuplicadoModal, setShowDuplicadoModal] = useState(false);
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -31,7 +38,7 @@ function Empleado() {
 
   const obtenerDepartamentos = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/departamentos');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/departamentos`);
       setDepartamentos(res.data);
     } catch (error) {
       console.error('Error al obtener departamentos:', error);
@@ -40,10 +47,35 @@ function Empleado() {
 
   const obtenerPuestos = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/puestos');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/puestos`);
       setPuestos(res.data);
     } catch (error) {
       console.error('Error al obtener puestos:', error);
+    }
+  };
+
+  const validarRostroAntesDeRegistrar = async (blob) => {
+    const formData = new FormData();
+    formData.append('image', blob, 'captura.jpg');
+
+    try {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/empleados/validar-rostro`, formData);
+      const data = res.data;
+
+      if (data.estado === 'NO_DUPLICADO') {
+        setColorAlerta('success');
+        setValidacionRostro('✅ Rostro biométrico procesado con éxito');
+        toast.success('✅ Rostro biométrico procesado con éxito');
+      } else if (data.estado === 'DUPLICADO') {
+        setColorAlerta('warning');
+        setValidacionRostro(`⚠️ El rostro ya está registrado como: ${data.nombre_detectado}`);
+        toast.warn(`⚠️ El rostro ya está registrado como: ${data.nombre_detectado}`);
+      }
+    } catch (error) {
+      console.error('Error en validación biométrica previa:', error);
+      setColorAlerta('danger');
+      setValidacionRostro('❌ Error al validar rostro');
+      toast.error('❌ Error al validar rostro');
     }
   };
 
@@ -55,7 +87,10 @@ function Empleado() {
     canvas.getContext('2d').drawImage(video, 0, 0);
     canvas.toBlob(blob => {
       setSnapshot(blob);
-      alert('✅ Foto tomada con éxito');
+      setValidacionRostro(null);
+      setColorAlerta('');
+      validarRostroAntesDeRegistrar(blob);
+      toast.success('📸 Foto tomada con éxito');
     }, 'image/jpeg');
   };
 
@@ -68,7 +103,43 @@ function Empleado() {
     e.preventDefault();
 
     if (!snapshot) {
-      alert("Por favor toma una foto antes de enviar.");
+      toast.warn('📸 Por favor toma una foto antes de enviar.');
+      return;
+    }
+
+    if (!/^[0-9]{8}$/.test(form.mobile)) {
+      toast.warn('📱 El número de teléfono debe tener exactamente 8 dígitos.');
+      return;
+    }
+
+    if (!form.email.includes('@') || !form.email.includes('.')) {
+      toast.warn('📧 Ingrese un correo válido.');
+      return;
+    }
+
+    const checkForm = new FormData();
+    checkForm.append('email', form.email);
+    checkForm.append('mobile', form.mobile);
+
+    try {
+      const resDup = await axios.post(
+        `${import.meta.env.VITE_API_URL}/empleados/verificar-duplicados`,
+        checkForm,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+
+      if (resDup.data.email_duplicado) {
+        toast.warn('📧 Este correo ya está registrado.');
+        return;
+      }
+
+      if (resDup.data.mobile_duplicado) {
+        toast.warn('📱 Este número ya está registrado.');
+        return;
+      }
+    } catch (error) {
+      console.error('Error al verificar duplicados:', error);
+      toast.error('❌ Error al verificar duplicados');
       return;
     }
 
@@ -79,52 +150,63 @@ function Empleado() {
     formData.append('image', snapshot, 'captured.jpg');
 
     try {
-      const res = await axios.post('http://localhost:8000/empleados/', formData, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/empleados`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       const data = res.data;
 
       if (data.estado === 'REGISTERED') {
-        alert(`✅ Empleado registrado correctamente\nID: ${data.empID}\nNombre: ${data.nombre_completo}`);
+        toast.success(`✅ Empleado registrado: ${data.nombre_completo}`);
         setForm({
-          firstName: '',
-          lastName: '',
-          sex: 'M',
-          type_emp: 'E',
-          jobTitle: '',
-          dept: '',
-          mobile: '',
-          email: '',
+          firstName: '', lastName: '', sex: 'M', type_emp: 'E',
+          jobTitle: '', dept: '', mobile: '', email: ''
         });
         setSnapshot(null);
+        setValidacionRostro(null);
+        setColorAlerta('');
       } else if (data.estado === 'REJECTED_DUPLICATE') {
-        alert(`⚠️ El rostro coincide con el empleado ID ${data.empID_detectado} (${data.nombre_detectado}).\nEste intento fue registrado en el historial de DuplicateAttempts.`);
+        setShowDuplicadoModal(true);
       } else {
-        alert('❌ Respuesta desconocida del servidor.');
+        toast.error('❌ Respuesta desconocida del servidor.');
       }
     } catch (error) {
       console.error('Error al registrar empleado:', error);
-      alert('❌ Error al registrar empleado. Revisa la consola para más detalles.');
+      toast.error('❌ Error al registrar empleado');
     }
   };
 
   return (
     <div className="container my-5">
-      <h2 className="text-center mb-4">Registro de Empleado (con cámara)</h2>
+      <ToastContainer
+        position="top-right"
+        className="toast-container-custom"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+
+      <h2 className="text-center mb-4">Registro de Empleado</h2>
 
       <div className="row">
-        {/* Columna izquierda: cámara */}
         <div className="col-md-6 text-center mb-4">
           <video ref={videoRef} autoPlay className="border rounded w-100" />
           <div className="mt-2">
             <button type="button" className="btn btn-primary" onClick={tomarFoto}>
-              📸 Tomar Foto
+              Escanear Rostro
             </button>
+            {validacionRostro && (
+              <div className={`alert alert-${colorAlerta} mt-3`}>
+                {validacionRostro}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Columna derecha: formulario */}
         <div className="col-md-6">
           <form onSubmit={handleSubmit} className="row g-3">
             <div className="col-12">
@@ -177,12 +259,27 @@ function Empleado() {
             </div>
             <div className="col-12">
               <button type="submit" className="btn btn-success w-100">
-                ✅ Registrar Empleado
+                Registrar Empleado
               </button>
             </div>
           </form>
         </div>
       </div>
+
+      {/* Modal rostro duplicado */}
+      <Modal show={showDuplicadoModal} onHide={() => setShowDuplicadoModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Intento Duplicado</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          ⚠️ Este rostro ya está registrado en el sistema. El intento ha sido movido a la tabla de usuarios duplicados. No se permite registrar dos veces al mismo empleado.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDuplicadoModal(false)}>
+            Cerrar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

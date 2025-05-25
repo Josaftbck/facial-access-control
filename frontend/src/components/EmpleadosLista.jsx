@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, Button, Form } from 'react-bootstrap';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import EmpleadoPermisosModal from './EmpleadoPermisosModal';
 
 function EmpleadosLista() {
@@ -11,17 +12,20 @@ function EmpleadosLista() {
   const [showFotoModal, setShowFotoModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editModal, setEditModal] = useState({
-    empID: null, firstName: '', lastName: '', sex: 'M', type_emp: 'E',
-    jobTitle: '', dept: '', mobile: '', email: ''
+    empID: null, firstName: '', lastName: '', sex: 'M', type_emp: 'E', jobTitle: '', dept: '', mobile: '', email: ''
   });
   const [puestos, setPuestos] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
   const [showPermisosModal, setShowPermisosModal] = useState(false);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [empIDAccion, setEmpIDAccion] = useState(null);
+  const [empNombreAccion, setEmpNombreAccion] = useState('');
 
-  const BASE_URL = 'http://localhost:8000/empleados';
-  const PUESTOS_URL = 'http://localhost:8000/puestos';
-  const DEPTOS_URL = 'http://localhost:8000/departamentos';
+  const BASE_URL = `${import.meta.env.VITE_API_URL}/empleados`;
+  const PUESTOS_URL = `${import.meta.env.VITE_API_URL}/puestos`;
+  const DEPTOS_URL = `${import.meta.env.VITE_API_URL}/departamentos`;
 
   useEffect(() => {
     obtenerEmpleados();
@@ -93,6 +97,7 @@ function EmpleadosLista() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
+      toast.success("Empleado actualizado correctamente");
       obtenerEmpleados();
       setShowEditModal(false);
     } catch (error) {
@@ -100,25 +105,39 @@ function EmpleadosLista() {
     }
   };
 
-  const desactivarEmpleado = async (empID) => {
-    if (confirm('¿Estás seguro de desactivar este empleado?')) {
-      try {
-        await axios.put(`${BASE_URL}/${empID}/desactivar`);
-        obtenerEmpleados();
-      } catch (error) {
-        console.error('Error al desactivar empleado:', error);
-      }
+  const confirmarDesactivacion = (empID, nombre) => {
+    setEmpIDAccion(empID);
+    setEmpNombreAccion(nombre);
+    setShowConfirmModal(true);
+  };
+
+  const confirmarRestauracion = (empID, nombre) => {
+    setEmpIDAccion(empID);
+    setEmpNombreAccion(nombre);
+    setShowRestoreModal(true);
+  };
+
+  const desactivarEmpleado = async () => {
+    try {
+      await axios.put(`${BASE_URL}/${empIDAccion}/desactivar`);
+      toast.info("Empleado desactivado");
+      obtenerEmpleados();
+    } catch (error) {
+      console.error('Error al desactivar empleado:', error);
+    } finally {
+      setShowConfirmModal(false);
     }
   };
 
-  const restaurarEmpleado = async (empID) => {
-    if (confirm('¿Deseas restaurar este empleado?')) {
-      try {
-        await axios.put(`${BASE_URL}/${empID}/restaurar`);
-        obtenerEmpleados();
-      } catch (error) {
-        console.error('Error al restaurar empleado:', error);
-      }
+  const restaurarEmpleado = async () => {
+    try {
+      await axios.put(`${BASE_URL}/${empIDAccion}/restaurar`);
+      toast.success("Empleado restaurado");
+      obtenerEmpleados();
+    } catch (error) {
+      console.error('Error al restaurar empleado:', error);
+    } finally {
+      setShowRestoreModal(false);
     }
   };
 
@@ -133,6 +152,17 @@ function EmpleadosLista() {
 
   return (
     <div className="container mt-4">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        className="toast-container-custom"
+      />
       <h2 className="mb-4">Lista de Empleados</h2>
 
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -168,9 +198,9 @@ function EmpleadosLista() {
                 <button className="btn btn-sm btn-warning me-2" onClick={() => abrirEditarModal(emp)}>Editar</button>
                 <button className="btn btn-sm btn-secondary me-2" onClick={() => abrirPermisosModal(emp)}>Permisos</button>
                 {emp.Active === 'Y' ? (
-                  <button className="btn btn-sm btn-danger" onClick={() => desactivarEmpleado(emp.empID)}>Desactivar</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => confirmarDesactivacion(emp.empID, `${emp.firstName} ${emp.lastName}`)}>Desactivar</button>
                 ) : (
-                  <button className="btn btn-sm btn-success" onClick={() => restaurarEmpleado(emp.empID)}>Restaurar</button>
+                  <button className="btn btn-sm btn-success" onClick={() => confirmarRestauracion(emp.empID, `${emp.firstName} ${emp.lastName}`)}>Restaurar</button>
                 )}
               </td>
             </tr>
@@ -178,6 +208,35 @@ function EmpleadosLista() {
         </tbody>
       </table>
 
+      {/* Modal Confirmar Desactivación */}
+      <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmar Desactivación</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          ¿Estás seguro de desactivar al empleado <strong>{empNombreAccion}</strong>?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>Cancelar</Button>
+          <Button variant="danger" onClick={desactivarEmpleado}>Desactivar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal Confirmar Restauración */}
+      <Modal show={showRestoreModal} onHide={() => setShowRestoreModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmar Restauración</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          ¿Deseas restaurar al empleado <strong>{empNombreAccion}</strong>?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowRestoreModal(false)}>Cancelar</Button>
+          <Button variant="success" onClick={restaurarEmpleado}>Restaurar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal Foto */}
       <Modal show={showFotoModal} onHide={() => setShowFotoModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Foto del Empleado</Modal.Title>
@@ -187,6 +246,7 @@ function EmpleadosLista() {
         </Modal.Body>
       </Modal>
 
+      {/* Modal Editar */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Editar Empleado</Modal.Title>
@@ -247,11 +307,16 @@ function EmpleadosLista() {
         </Modal.Footer>
       </Modal>
 
+      {/* Modal Permisos */}
       {empleadoSeleccionado && (
         <EmpleadoPermisosModal
           show={showPermisosModal}
           handleClose={() => setShowPermisosModal(false)}
           empleado={empleadoSeleccionado}
+          onPermisosActualizados={() => {
+            toast.success("Permisos actualizados correctamente");
+            obtenerEmpleados();
+          }}
         />
       )}
     </div>
