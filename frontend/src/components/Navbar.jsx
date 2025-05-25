@@ -1,51 +1,40 @@
+import { Navbar, Nav, Container } from 'react-bootstrap';
 import { NavLink } from 'react-router-dom';
 
-function Navbar() {
+function AppNavbar() {
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-      <div className="container-fluid">
-        <NavLink className="navbar-brand" to="/">Seguridad Global</NavLink>
+    <Navbar bg="dark" expand="lg" variant="dark" className='fixed-top'>
+      <Container>
+        <Navbar.Brand as={NavLink} to="/dashboard">
+          Seguridad Global
+        </Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="ms-auto">
+            <Nav.Link as={NavLink} to="/dashboard" end>
+              Inicio
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/dashboard/departamentos">
+              Departamentos
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/dashboard/puestos">
+              Puestos
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/dashboard/empleados-lista">
+              Empleados
+            </Nav.Link>
+            <Nav.Link as={NavLink} to="/dashboard/empleados">
+              Registro Biometrico
+            </Nav.Link>
 
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/" end>
-                Inicio
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/departamentos">
-                Departamentos
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/puestos">
-                Puestos
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/empleados">
-                Empleados
-              </NavLink>
-            </li>
-            {/* Agregá más rutas aquí según avances */}
-          </ul>
-        </div>
-      </div>
-    </nav>
+            <Nav.Link as={NavLink} to="/dashboard/dispositivos">
+              Dispositivos
+            </Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
   );
 }
 
-export default Navbar;
+export default AppNavbar;

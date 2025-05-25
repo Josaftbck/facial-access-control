@@ -103,4 +103,14 @@ button:hover {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+/* para las alertas dashboard */
 
+
+/* App.css o global.css */
+.toast-container-custom {
+  margin-top: 70px !important;  /* espacio debajo del navbar */
+  z-index: 9999 !important;     /* asegurar visibilidad por encima de modales, navbar, etc. */
+}
+body {
+  padding-top: 40px; /* Ajusta según la altura del navbar */
+}

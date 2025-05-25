@@ -1,11 +1,31 @@
+# 🔁 Dependencias API (FastAPI + DB + Multipart + Env)
 fastapi
 uvicorn
 sqlalchemy
 pydantic
 mysql-connector-python
 python-multipart
-face-recognition
-opencv-python
-numpy
-pillow
 python-dotenv
+
+# 🔍 Reconocimiento facial
+cmake==4.0.0
+dlib==19.24.8
+face_recognition @ git+https://github.com/ageitgey/face_recognition@2e2dccea9dd0ce730c8d464d0f67c6eebb40c9d1
+face_recognition_models==0.3.0
+numpy==2.2.5
+opencv-python==4.11.0.86
+pillow==11.2.1
+
+# 🌐 Peticiones y red
+requests==2.32.3
+urllib3==2.4.0
+idna==3.10
+certifi==2025.4.26
+charset-normalizer==3.4.1
+
+# 🎨 Terminal / CLI
+click==8.1.8
+colorama==0.4.6
+
+# 🔧 Build tools
+setuptools==80.0.1
