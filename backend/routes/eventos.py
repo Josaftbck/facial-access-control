@@ -75,7 +75,8 @@ def ultimos_eventos(db: Session = Depends(get_db)):
 
     resultado = []
     for log, emp, dev, dept in eventos:
-        resultado.append({
+
+            resultado.append({
             "fecha": log.EventDateTime.strftime("%Y-%m-%d %H:%M:%S"),
             "usuario": f"{emp.firstName} {emp.lastName}" if emp else "No identificado",
             "resultado": "Exitoso" if log.AccessResult == "A" else "Denegado",

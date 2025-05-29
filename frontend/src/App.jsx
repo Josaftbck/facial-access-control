@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ValidadorAcceso from './components/ValidadorAcceso';
 import DashboardApp from './components/DashboardApp';
+import Login from './components/LOG/Login';
+import ProtectedRoute from './utils/ProtectedRoute';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -22,11 +24,28 @@ function App() {
       />
 
       <Routes>
-        {/* Ruta principal: Solo validador de acceso */}
-        <Route path="/" element={<ValidadorAcceso />} />
+        {/* Ruta de login pública */}
+        <Route path="/login" element={<Login />} />
 
-        {/* Ruta separada para dashboard administrativo */}
-        <Route path="/dashboard/*" element={<DashboardApp />} />
+        {/* Ruta principal protegida */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <ValidadorAcceso />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Dashboard protegido */}
+        <Route
+          path="/dashboard/*"
+          element={
+            <ProtectedRoute>
+              <DashboardApp />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );

@@ -1,6 +1,8 @@
+# employee.py
 from sqlalchemy import Column, String, Enum, SmallInteger, Integer, DateTime, LargeBinary, ForeignKey, Text
 from database.db import Base
 from datetime import datetime
+from sqlalchemy.orm import relationship
 
 class Employee(Base):
     __tablename__ = "ohem"
@@ -12,7 +14,7 @@ class Employee(Base):
     sex = Column(Enum("M", "F"), nullable=False, default="M")
     jobTitle = Column(SmallInteger)
     dept = Column(SmallInteger)
-    userId = Column(Integer, nullable=True)
+    userId = Column(Integer, ForeignKey("umg_biometria.ousr.USERID"), nullable=True)
     mobile = Column(String(50))
     email = Column(String(100))
     UpdateDate = Column(DateTime, default=datetime.now)
@@ -23,3 +25,11 @@ class Employee(Base):
     BiometricEmbedding = Column(Text, nullable=True)
     type_emp = Column(Enum("E", "V"), nullable=False, default="E")
     biometric_status = Column(SmallInteger, ForeignKey("umg_biometria.biometric_status.status_id"), default=1)
+
+
+    # Relación con el modelo User
+    user = relationship(
+        "User",
+        back_populates="employee",
+        uselist=False
+    )

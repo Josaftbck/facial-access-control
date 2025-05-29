@@ -7,6 +7,8 @@ import EmpleadosLista from "./EmpleadosLista";
 import Dispositivos from "./Dispositivos";
 import InicioDashboard from "./InicioDashboard";
 import { ToastContainer } from 'react-toastify';
+import UserForm from "./Users/UserForm";
+import UserList from "./Users/UserList";
 import 'react-toastify/dist/ReactToastify.css';
 
 function DashboardApp() {
@@ -34,6 +36,10 @@ function DashboardApp() {
           <Route path="empleados" element={<Empleados />} />
           <Route path="empleados-lista" element={<EmpleadosLista />} />
           <Route path="dispositivos" element={<Dispositivos />} />
+          {/* Rutas para usuarios */}
+          <Route path="users" element={<UserList />} />  {/* Listado de usuarios */}
+          <Route path="users/new" element={<UserForm />} />        {/* Crear usuario */}
+          <Route path="users/:id" element={<UserForm />} />        {/* Editar usuario */}
         </Routes>
       </div>
     </>

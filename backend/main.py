@@ -9,6 +9,8 @@ from routes import devices
 from routes import AccessByDepartment
 from routes import event_log  
 from routes import eventos
+from routes import users
+from routes import auth  # Agrega esto
 from models.biometric_status import BiometricStatus
 
 
@@ -23,7 +25,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://localhost:5173",
-        "https://192.168.0.13:5173"
+        "https://192.168.0.85:5173"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -40,7 +42,8 @@ app.include_router(devices.router)
 app.include_router(AccessByDepartment.router)
 app.include_router(event_log.router)
 app.include_router(eventos.router)
-
+app.include_router(users.router)
+app.include_router(auth.router)  # Después de los otros routers
 
 @app.get("/")
 def root():
