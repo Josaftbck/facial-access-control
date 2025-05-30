@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import './Login.css'; // Importa el archivo CSS
 import { FaUser, FaLock, FaSignInAlt } from 'react-icons/fa';
+import { CgEnter } from 'react-icons/cg';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -110,6 +111,9 @@ function Login() {
         <div className="login-footer">
           <p>¿Problemas para ingresar? <a href="#">Contacta al administrador</a></p>
         </div>
+        <div ><a href="/" class="btn btn-recognition" >Enter live facial recognition</a></div>
+        
+
       </div>
     </div>
   );
